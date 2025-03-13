@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 const (
@@ -36,7 +38,8 @@ func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	log.Println("INFO: Starting Dynamic DevOps API server")
 
-	router := http.NewServeMux()
+	// Replace standard router with Gorilla Mux
+	router := mux.NewRouter()
 
 	// Register routes
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -44,14 +47,14 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, `{"message": "Hello, World!"}`)
-	})
+	}).Methods("GET")
 
 	// Health check
 	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, `{"status": "ok"}`)
-	})
+	}).Methods("GET")
 
 	// Info Route
 	// Return Some Info About Me
@@ -59,16 +62,16 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		fmt.Fprint(w, `{"name": "Mohamed Abdelazem", "email": "mabdelazemahmed@gmail.com", "github": "moabdelazem", "linkedin": "https://www.linkedin.com/in/moabdelazem/"}`)
-	})
+	}).Methods("GET")
 
 	// Apply middleware
-	loggedRouter := loggingMiddleware(router)
+	router.Use(loggingMiddleware)
 
 	// Log server startup
 	log.Printf("INFO: Server listening on port %d", PORT)
 
 	// Start server
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), loggedRouter); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), router); err != nil {
 		log.Printf("ERROR: Failed to start server: %v", err)
 		os.Exit(1)
 	}
