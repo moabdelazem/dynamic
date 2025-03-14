@@ -5,60 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/moabdelazem/dynamicdevops/internal/api"
+	"github.com/moabdelazem/dynamicdevops/pkg/config"
 )
-
-const (
-	PORT = 8080
-)
-
-// Logger middleware to log HTTP requests
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-
-		// Call the next handler
-		next.ServeHTTP(w, r)
-
-		// Log the request details after handling
-		log.Printf("REQUEST: %s %s - %s - %s",
-			r.Method,
-			r.URL.Path,
-			r.RemoteAddr,
-			time.Since(start),
-		)
-	})
-}
-
-func registerRoutes(router *mux.Router) {
-	// Register routes
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Send JSON response
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"message": "Hello, World!"}`)
-	}).Methods("GET")
-
-	// Health check
-	router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"status": "ok"}`)
-	}).Methods("GET")
-
-	// Info Route
-	// Return Some Info About Me
-	router.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, `{"name": "Mohamed Abdelazem", "email": "mabdelazemahmed@gmail.com", "github": "moabdelazem", "linkedin": "https://www.linkedin.com/in/moabdelazem/"}`)
-	}).Methods("GET")
-
-	// Apply middleware
-	router.Use(loggingMiddleware)
-}
 
 func main() {
 	// Configure logger
@@ -66,15 +16,17 @@ func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	log.Println("INFO: Starting Dynamic DevOps API server")
 
-	// Replace standard router with Gorilla Mux
-	router := mux.NewRouter()
-	registerRoutes(router)
+	// Load configuration
+	cfg := config.NewConfig()
+
+	// Setup router
+	router := api.SetupRouter()
 
 	// Log server startup
-	log.Printf("INFO: Server listening on port %d", PORT)
+	log.Printf("INFO: Server listening on port %d", cfg.Port)
 
 	// Start server
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", PORT), router); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), router); err != nil {
 		log.Printf("ERROR: Failed to start server: %v", err)
 		os.Exit(1)
 	}
