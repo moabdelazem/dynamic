@@ -32,15 +32,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func main() {
-	// Configure logger
-	log.SetOutput(os.Stdout)
-	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
-	log.Println("INFO: Starting Dynamic DevOps API server")
-
-	// Replace standard router with Gorilla Mux
-	router := mux.NewRouter()
-
+func registerRoutes(router *mux.Router) {
 	// Register routes
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Send JSON response
@@ -66,6 +58,17 @@ func main() {
 
 	// Apply middleware
 	router.Use(loggingMiddleware)
+}
+
+func main() {
+	// Configure logger
+	log.SetOutput(os.Stdout)
+	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
+	log.Println("INFO: Starting Dynamic DevOps API server")
+
+	// Replace standard router with Gorilla Mux
+	router := mux.NewRouter()
+	registerRoutes(router)
 
 	// Log server startup
 	log.Printf("INFO: Server listening on port %d", PORT)
